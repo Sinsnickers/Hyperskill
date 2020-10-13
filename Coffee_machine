@@ -1,0 +1,118 @@
+class coffee_machine:
+    def __init__(self, water, milk, beans, cups, money):
+        self.water_in_machine = water
+        self.milk_in_machine = milk
+        self.beans_in_machine = beans
+        self.cups_in_machine = cups
+        self.money_in_machine = money
+    
+    def buy(self):
+        product = input("What do you want to buy? 1 - espresso, 2 - latte, 3 - cappuccino, back - to main menu:")
+        if product == "back":
+            used_supplies = {
+                "water" : 0,
+                "milk" : 0,
+                "beans" : 0,
+                "cups" : 0,
+                "costs" : 0 }
+        elif product == "1":
+            used_supplies = {
+                "water" : 250,
+                "milk" : 0,
+                "beans" : 16,
+                "cups" : 1,
+                "costs" : 4 }
+            
+        elif product == "2":
+            used_supplies = {
+                "water" : 350,
+                "milk" : 75,
+                "beans" : 20,
+                "cups" : 1,
+                "costs" : 7 }
+        
+        elif product == "3":
+            used_supplies = {
+                "water" : 200,
+                "milk" : 100,
+                "beans" : 12,
+                "cups" : 1,
+                "costs" : 6 }
+
+        return used_supplies
+
+    def fill(self):
+        water = int(input("Write how many ml of water do you want to add: "))
+        milk = int(input("Write how many ml of milk do you want to add: "))
+        beans = int(input("Write how many grams of coffee beans do you want to add: "))
+        cups = int(input("Write how many disposable cups of coffee do you want to add: ")) 
+
+        add_supplies = {
+        "add_water" : water,
+        "add_milk" : milk,
+        "add_beans" : beans,
+        "add_cups" : cups
+        }
+        
+        return (add_supplies)
+
+    def take(self, argument):
+        print("I gave you ${}".format(argument))
+        
+        return 0 
+
+    def print_supplies(self):
+        self.water_in_machine, self.milk_in_machine, self.beans_in_machine, self.cups_in_machine, self.money_in_machine
+        print(f"""The coffee machine has:
+    {self.water_in_machine} of water
+    {self.milk_in_machine} of milk
+    {self.beans_in_machine} of coffee beans
+    {self.cups_in_machine} of disposable cups
+    {self.money_in_machine} of money
+    """)
+
+    def machine(self):
+        #self.water_in_machine, self.milk_in_machine, self.beans_in_machine, self.cups_in_machine, self.money_in_machine
+
+        action = input("Write action (buy, fill, take, remaining, exit):")
+        while(True):
+            if action == "take":
+                self.take(self.money_in_machine)
+                self.money_in_machine = 0
+                print()
+                action = input("Write action (buy, fill, take, remaining, exit):")
+            elif action == "fill":
+                new_filled = self.fill()
+                self.water_in_machine += new_filled["add_water"]
+                self.milk_in_machine += new_filled["add_milk"]
+                self.beans_in_machine += new_filled["add_beans"]
+                self.cups_in_machine += new_filled["add_cups"]
+                print()
+                action = input("Write action (buy, fill, take, remaining, exit):")
+            elif action == "buy":
+                used_supplies = self.buy()
+                if self.water_in_machine - used_supplies["water"] < 0:
+                    print("Not enough water")
+                elif self.milk_in_machine - used_supplies["milk"] < 0:
+                    print("Not enough milk")
+                elif self.beans_in_machine - used_supplies["beans"] < 0:
+                    print("Not enough beans")
+                elif self.cups_in_machine - used_supplies["cups"] < 0:
+                    print("Not enough cups")
+                else:
+                    self.water_in_machine -= used_supplies["water"]
+                    self.milk_in_machine -= used_supplies["milk"]
+                    self.beans_in_machine -= used_supplies["beans"]
+                    self.cups_in_machine -= used_supplies["cups"]
+                    self.money_in_machine += used_supplies["costs"]
+                
+                action = input("Write action (buy, fill, take, remaining, exit):")
+            elif action == "remaining":
+                self.print_supplies()
+                action = input("Write action (buy, fill, take, remaining, exit):")
+            elif action == "exit":
+                break
+
+        
+coffee = coffee_machine(400,540,120,9,550)
+coffee.machine()
