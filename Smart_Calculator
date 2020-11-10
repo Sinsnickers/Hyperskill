@@ -1,0 +1,154 @@
+import re
+result = 0
+variables_dict = {}
+
+def input_validation(user_input):
+    global variables_dict
+    try:
+        global result
+        to_do = user_input
+        hard_inputs = [")","(","+","-","*","/"]
+        to_do = to_do.replace(")"," ) ")
+        to_do = to_do.replace("("," ( ")
+        to_do = to_do.replace("+"," + ")
+        to_do = to_do.replace("-"," - ")
+        to_do = to_do.replace("/"," / ")
+        to_do = to_do.replace("*"," * ")
+        to_do = to_do.split(" ")
+        equation = []
+        int_count = 0
+        operator_count = 0
+        for entry in to_do:
+            if entry.lstrip("-") in variables_dict.keys() or entry.lstrip("+") in variables_dict.keys():
+                equation.append(variables_dict[entry])
+                int_count +=1
+            elif entry.rstrip("-") in variables_dict.keys() or entry.rstrip("+") in variables_dict.keys():
+                equation.append(variables_dict[entry])
+                int_count +=1
+            elif entry.strip("-") in variables_dict or entry.strip("+") in variables_dict:
+                print("yeah")
+            elif entry.lstrip("-").isnumeric() or entry.lstrip("+").isnumeric():
+                equation.append(entry)
+                int_count +=1
+            elif entry == "(":
+                equation.append("(")
+            elif entry == ")":
+                equation.append(")")
+            elif entry.startswith("+"):
+                equation.append("+")
+            elif entry.startswith("-") and (len(entry) % 2) == 1:
+                equation.append("-")
+            elif entry.startswith("-") and (len(entry) % 2) == 0:
+                equation.append("+")
+            elif entry == "*" or entry == "/":
+                equation.append(entry)
+            else:
+                pass
+        return[*equation]
+
+    except:
+        print("Unknown command")
+
+def store_variables(user_input):
+    global variables_dict
+    variables = user_input.split("=")
+    if len(variables) < 3:
+        variable_one = variables[0].strip()
+        variable_two = variables[1].strip()
+        if variable_one.isalpha() and variable_two.isdigit():
+            variables_dict[variable_one] = variable_two
+        elif variable_one.isalpha() and variable_two.isalpha():
+            if variable_two in variables_dict.keys():
+                switch_number = variables_dict[variable_two]
+                variables_dict[variable_one] = switch_number
+            else:
+                print("Invalid assignment")
+        elif variable_one not in variables_dict.keys():
+            print("Invalid identifier")
+        else:
+            print("Invalid assignment")
+    else:
+        print("Invalid asssignment")
+
+def infix_to_postfix(equation):
+    high_precedence = ["*","/"]
+    low_precedence = ["+","-"]
+    number_stack, operator_stack, result_stack = [], [], []
+    try:
+        for entry in equation:
+            if entry.isdigit(): # add operands as they arrive
+                number_stack.append(entry)
+            elif len(operator_stack) == 0 or operator_stack[-1] == "(":
+                operator_stack.append(entry)
+            elif entry in high_precedence and operator_stack[-1] in low_precedence:
+                operator_stack.append(entry)
+            elif entry in low_precedence or (entry in high_precedence and operator_stack[-1] in high_precedence): # 3
+                for item in operator_stack[::-1]:
+                    if item == "(":
+                        break
+                    else:
+                        number_stack.append(item)
+                        operator_stack.pop()
+                operator_stack.append(entry)
+            elif entry == "(":  # 5 add left parenthesis
+                    operator_stack.append(entry)
+            elif entry == ")":
+                while operator_stack and operator_stack[-1]!= '(':
+                    number_stack.append(operator_stack.pop())
+                operator_stack.pop()
+        for item in operator_stack[::-1]:
+            operator_stack.pop()
+            number_stack.append(item)
+
+        for item in number_stack:
+            if item.lstrip("-").isdigit() or item.lstrip("+").isdigit():
+                result_stack.append(int(item))
+            elif not item.isdigit():
+                if item == "+":
+                    number = result_stack[-2] + result_stack[-1]
+                    stack_pop_result(result_stack,number)
+                elif item == "-":
+                    number = result_stack[-2] - result_stack[-1]
+                    stack_pop_result(result_stack,number)
+                elif item == "*":
+                    number = result_stack[-2] * result_stack[-1]
+                    stack_pop_result(result_stack,number)
+                elif item == "/":
+                    number = result_stack[-2] / result_stack[-1]
+                    stack_pop_result(result_stack,number)
+                else:
+                    break
+    except:
+        print("Invalid expression")
+
+    if len(result_stack) == 1:
+        print(int(*result_stack))
+    elif len(result_stack) > 1:
+        print("Invalid expression")
+    else:
+        print("Unknown command")
+
+def stack_pop_result(result_stack,number):
+    result_stack.pop()
+    result_stack.pop()
+    result_stack.append(number)
+
+def calc_menu():
+    while(True):
+        user_input = input()
+        if user_input.startswith("/"):
+            if user_input == "/exit":
+                print("Bye!")
+                break
+            elif user_input == "/help":
+                print("Choose a number and a action to do!")
+            else:
+                print("Unknown command")
+        elif user_input == "":
+            continue
+        elif "=" in user_input:
+            store_variables(user_input)
+        else:
+            infix_to_postfix(input_validation(user_input))
+
+calc_menu()
