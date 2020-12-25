@@ -1,0 +1,255 @@
+import requests
+import argparse, sys
+
+from bs4 import BeautifulSoup
+
+
+class translator():
+
+    def __init__(self):
+        self.language = None
+        self.language_from = None
+        self.word_to_translate = None
+        self.language_to = None
+        self.pool = None
+        self.words = []
+        self.sentences = []
+
+    def language_pool(self):
+        #print("Hello, welcome to the translator. Translator supports: ")
+        self.pool = {
+            0: "All",
+            1: "Arabic",
+            2: "German",
+            3: "English",
+            4: "Spanish",
+            5: "French",
+            6: "Hebrew",
+            7: "Japanese",
+            8: "Dutch",
+            9: "Polish",
+            10: "Portuguese",
+            11: "Romanian",
+            12: "Russian",
+            13: "Turkish",
+        }
+        #for i, language in self.pool.items():
+        #print(f"{i}. {language}")
+
+    def parse_command_line(self):
+        parser = argparse.ArgumentParser()
+        parser.add_argument("language_from", type=str)
+        parser.add_argument("language_to", type=str)
+        parser.add_argument("word", type=str)
+        try:
+            args = parser.parse_args()
+            if args.language_from.capitalize() not in self.pool.values():
+                print(f"Sorry, the program doesn't support {args.language_from}")
+                exit()
+            else:
+                self.language = args.language_from
+            if args.language_to.capitalize() not in self.pool.values():
+                print(f"Sorry, the program doesn't support {args.language_to}")
+                exit()
+            else:
+                self.language_to = args.language_to
+            self.word_to_translate = args.word
+            return f"{self.language}-{self.language_to}/{self.word_to_translate}"
+        except:
+            return None
+
+    def translation(self):
+        try:
+            self.language_from = int(input("Type the number of your language:\n"))
+            self.language = self.pool[self.language_from].lower()
+            language_to = int(input("Type the number of language you want to translate to:\n"))
+            if language_to == 0:
+                self.word_to_translate = input("Type the word you want to translate:\n")
+                self.translate_all()
+            else:
+                self.language_to = self.pool[language_to].lower()
+                self.word_to_translate = input("Type the word you want to translate:\n")
+                return f"{self.language}-{self.language_to}/{self.word_to_translate}"
+        except:
+            print("Please enter valid number! ")
+
+    def translate_all(self):
+        #print(
+            #f"\nThis will result in the following output and a file called «{self.word_to_translate}.txt» with the same content:")
+        for i, language in self.pool.items():
+            if i == self.language_from:
+                continue
+            else:
+                language = language.lower()
+                self.language_to = self.pool[i].lower()
+                url = "https://context.reverso.net/translation/"
+                link = f"{self.language}-{self.language_to}/{self.word_to_translate}"
+                headers = {'User-Agent': 'Mozilla/5.0'}
+            try:
+                r = requests.get(url + link, headers=headers)
+                soup = BeautifulSoup(r.content, "html.parser")
+                word_translation = soup.find_all("div", {"id": "translations-content"})
+                translations = soup.find_all("section", {'id': "examples-content"})
+                if r:
+                    sentence = translations[0].find_all("span", {"class": "text"})
+                    self.sentences.append(sentence[0].text.strip())
+                    self.sentences.append(sentence[1].text.strip())
+                    word = (word_translation[0].find_all("a"))
+                    self.words.append(word[0].text.strip())
+                else:
+                    print(f"Sorry, unable to find {self.word_to_translate}")
+                self.print_all()
+                self.save_to_file_all()
+                self.words = []
+                self.sentences = []
+            except:
+                pass
+
+    def create_requests(self, url):
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        try:
+            r = requests.get(url + self.translation(), headers=headers)
+            soup = BeautifulSoup(r.content, "html.parser")
+            word_translation = soup.find_all("div", {"id": "translations-content"})
+            translations = soup.find_all("section", {'id': "examples-content"})
+            if r:
+                # print(f"{r.status_code} OK")
+                for trans in translations:
+                    sentence = trans.find_all("span", {"class": "text"})
+                    for sen in sentence:
+                        self.sentences.append(sen.text.strip())
+                for word in word_translation:
+                    anchor = word.find_all("a")
+                    for a in anchor:
+                        self.words.append(a.text.strip())
+            self.pretty_print()
+            self.save_to_file()
+        except:
+            pass
+
+    def translate_command_line(self, url):
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        if self.language_to != "all":
+            try:
+                r = requests.get(url + self.parse_command_line(), headers=headers)
+                soup = BeautifulSoup(r.content, "html.parser")
+                word_translation = soup.find_all("div", {"id": "translations-content"})
+                translations = soup.find_all("section", {'id': "examples-content"})
+                if r:
+                    # print(f"{r.status_code} OK")
+                    for trans in translations:
+                        sentence = trans.find_all("span", {"class": "text"})
+                        for sen in sentence:
+                            self.sentences.append(sen.text.strip())
+                    for word in word_translation:
+                        anchor = word.find_all("a")
+                        for a in anchor:
+                            self.words.append(a.text.strip())
+                else:
+                    print(f"Sorry, unable to find {self.word_to_translate}")
+                    exit()
+                self.pretty_print()
+                self.save_to_file()
+            except:
+                pass
+        else:
+            self.translate_all()
+
+
+    def pretty_print(self):
+        try:
+            print()
+            print(f"{self.language_to.capitalize()} Translations:")
+            for i in range(5):
+                print(self.words[i])
+        except:
+            pass
+
+        print()
+        try:
+            print(f"{self.language_to.capitalize()} Examples:")
+
+            for i in range(0, 10, 2):
+                print(self.sentences[i])
+                print(self.sentences[i + 1])
+                print()
+        except:
+            pass
+
+    def print_all(self):
+        try:
+            print()
+            print(f"{self.language_to.capitalize()} Translations:")
+            for i in range(1):
+                print(self.words[i])
+        except:
+            pass
+
+        print()
+        try:
+            print(f"{self.language_to.capitalize()} Example:")
+
+            for i in range(0, 2, 2):
+                print(self.sentences[i])
+                print(self.sentences[i + 1])
+                print()
+        except:
+            pass
+
+    def save_to_file_all(self):
+        with open(f"{self.word_to_translate}.txt", "a") as f:
+            try:
+                # print("\n",file=f)
+                print(f"{self.language_to.capitalize()} Translations:", file=f)
+                for i in range(1):
+                    print(self.words[i], file=f)
+                print("", file=f)
+            except:
+                pass
+
+            try:
+                print(f"{self.language_to.capitalize()} Example:", file=f)
+
+                for i in range(0, 2, 2):
+                    print(self.sentences[i], file=f)
+                    print(self.sentences[i + 1], file=f)
+                print("\n", file=f)
+            except:
+                pass
+
+    def save_to_file(self):
+        with open(f"{self.word_to_translate}.txt", "a") as f:
+            try:
+                print(f"{self.language_to.capitalize()} Translations:", file=f)
+                for i in range(5):
+                    print(self.words[i], file=f)
+            except:
+                pass
+
+            print("", file=f)
+            try:
+                print(f"{self.language_to.capitalize()} Examples:", file=f)
+
+                for i in range(0, 10, 2):
+                    print(self.sentences[i], file=f)
+                    print(self.sentences[i + 1], file=f)
+                    print("", file=f)
+            except:
+                pass
+
+
+def main():
+    translation = translator()
+    translation.language_pool()
+    #translation.create_requests("https://context.reverso.net/translation/")
+    if translation.parse_command_line() == None:
+        exit()
+        translation.create_requests("https://context.reverso.net/translation/")
+    else:
+        translation.translate_command_line("https://context.reverso.net/translation/")
+
+
+
+
+if __name__ == "__main__":
+    main()
