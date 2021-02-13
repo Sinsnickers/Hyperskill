@@ -19,7 +19,7 @@ class Hacker():
             for line in file.readlines():
                 username = line.strip("\n")
                 try_login = {"login": username,
-                             "password": ""}
+                            "password": ""}
                 login_json = json.dumps(try_login)
                 request = self.client_socket.send(login_json.encode())
                 response_json = self.client_socket.recv(1024).decode()
